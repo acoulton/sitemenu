@@ -27,7 +27,7 @@ abstract class AndrewC_SiteMenu {
          *              static => array(
          *                  //null key is param map
          *                  null => array('page','context'),
-         *                  //now it's a keymap of imploded params
+         *                  //now the key is a querystring of params
          *                  'help:view' => "Help>View"
          */
         $route = Request::instance()
@@ -40,28 +40,23 @@ abstract class AndrewC_SiteMenu {
         $request = Request::instance();
 
         $path_info = Arr::path($this->_route_map,
-                      Route::name($request->route)   $path, $default)
-        $search_tree = $this->_route_map;
-        $search_path = array(
-            Route::name($request->route),
-            $request->directory,
-            $request->controller,
-            $request->action
-        );
+                      Route::name($request->route) . "."
+                      . $request->directory . "."
+                      . $request->controller . "."
+                      . $request->action);
 
-        foreach ($search_path as $key) {
-            $search_tree = Arr::get($search_tree,$key);
-            if ( ! $search_tree) {
-                break;
-            }
-        }
-
-        if ( ! $search_tree) {
+        if ( ! $path_info) {
+            // No reverse nav path for this URI
             return false;
-        } elseif (is_array($search_tree)) {
-
+        } elseif (is_array($path_info)) {
+            // The array stores the params we're interested in under the null key
+            $params = Arr::get($path_info, null, array());
+            // And the reverse nav path is then under this URI as a querystring
+            $key = http_build_query(Arr::extract($request->param(null), $params));
+            return Arr::get($path_info, $key, null);
         } else {
-            return $search_tree;
+            // The nav path is the value
+            return $path_info;
         }
     }
 
