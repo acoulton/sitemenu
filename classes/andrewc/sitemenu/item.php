@@ -16,9 +16,11 @@ abstract class AndrewC_SiteMenu_Item {
     public $action = null;
     public $params = null;
     public $item_attributes = array();
+
     protected $_sub_items = array();
     protected $_parent = array();
     protected $_site_menu = null;
+    protected $_path = null;
 
     /**
      * Sets up object references to parent and etc, and sets the caption
@@ -26,9 +28,10 @@ abstract class AndrewC_SiteMenu_Item {
      * @param SiteMenu_Item $parent
      * @param SiteMenu $menu
      */
-    public function __construct($caption, $parent, $menu) {
-        $this->_caption = $caption;
+    public function __construct($caption, $path, $parent, $menu) {
+        $this->caption = $caption;
         $this->_parent = $parent;
+        $this->_path = $path;
         $this->_site_menu = $menu;
     }
 
@@ -110,12 +113,52 @@ abstract class AndrewC_SiteMenu_Item {
 
         // Create a new item if required
         if (($item === false) AND $force_create) {
-            $item = new SiteMenu_Item($caption, $this, $this->_site_menu);
+            if ($this->_path) {
+                $path=$this->_path . ">" . $caption;
+            } else {
+                $path = $caption;
+            }
+            $item = new SiteMenu_Item($caption, $path, $this, $this->_site_menu);
             $this->_sub_items[$caption] = $item;
         }
 
         // Returns item or false if not found
         return $item;
+    }
+
+    /**
+     * Fills an array (passed by reference) with information on how to reverse route
+     * a particular navigation element. See [SiteMenu::_build_reverse_lookup()] for further
+     * information on the structure of the reverse lookup map.
+     * @todo Improve tests of existing mapping to detect conflicts
+     * @param array $map
+     */
+    public function build_reverse_lookup(&$map) {
+        // Build our own reverse lookup if we have a route
+        if ($this->route) {
+            // Get a reference to the place we need to store our info
+            $lookup_map = &$map[Route::name($this->route)][$this->directory][$this->controller][$this->action];
+
+            if (count($this->params)) {
+                // Test to see if already exists
+                if ($lookup_map && !is_array($lookup_map)) {
+                    throw new InvalidArgumentException("Already mapped!");
+                }
+
+                // Map the keys and the params
+                $lookup_map[null] = array_keys($this->params);
+                $lookup_map[http_build_query($this->params)] = $this->_path;
+
+            } else {
+                // It's a straightforward storage of the path
+                $lookup_map = $this->_path;
+            }
+        }
+
+        // Recurse into children
+        foreach ($this->_sub_items as $item) {
+            $item->build_reverse_lookup($map);
+        }
     }
     
 }

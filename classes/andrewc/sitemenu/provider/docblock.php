@@ -15,7 +15,8 @@ defined('SYSPATH') or die('No direct script access.');
  *         public function action_password() {
  *         }
  *
- * @package SiteMenu.Provider
+ * @package SiteMenu
+ * @subpackage Provider
  */
 abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
 
@@ -26,11 +27,11 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
     public function compile() {
         // Attempt to get an index from cache
         // @todo: the actual caching!
-        if (!($controller_index = false)) {
+        if ( ! ($controller_index = false)) {
             $controller_index = $this->_index_controllers();
             // Cache the index
         }
-
+        
         // Get default tags
         $default_tags = Kohana::config('sitemenu.provider.docblock.default_tags');
         foreach ($controller_index as $action) {
@@ -48,14 +49,11 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
             // Split the controller name to a directory and controller
             $controller = substr(strrchr($action['controller'], '_'),1);
             $directory = str_replace('_', DIRECTORY_SEPARATOR,
-                            substr($action['controller'],0,0-strlen($controller)));
-
-            //@todo: Parsing of the params tag - should it be a querystring?
+                            substr($action['controller'],11,0-strlen($controller)));            
 
             // Set the item route
             $item->route(Arr::get($tags,'route','default'), $directory,
-                            $controller, $action['action'],
-                         Arr::get($tags,'params',array()));
+                            $controller, $action['action'], array());
         }
         return true;
     }
@@ -74,8 +72,10 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
         $controller_index = array();
         // Get all controller classes
         $controllers = SiteMenu::classes('classes/controller');
+        
         // @todo: use configuration to get controllers to ignore?
         foreach ($controllers as $controller) {
+            
             // Get a new Reflection of the class
             $controller = new ReflectionClass($controller);
 
@@ -86,21 +86,23 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
 
             // Get all the methods
             foreach ($controller->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+                $comment = "";
+                $method_name = $method->name;
                 // Ignore non-action methods
-                if (substr($method->name, 7) !== 'action_') {
+                if (substr($method_name, 0, 7) !== 'action_') {
                     continue;
                 }
-
+                
                 // Find a method docblock, in the current class or an ancestor
                 $defining_class = $controller;
                 do {
-                    if ($defining_class->hasMethod($method)
-                            AND $comment = $defining_class->getMethod($method)->getDocComment()) {
+                    if ($defining_class->hasMethod($method_name)
+                            AND $comment = $defining_class->getMethod($method_name)->getDocComment()) {
                         // Found a description for this method
                         break;
                     }
                 } while ($defining_class = $defining_class->getParentClass());
-
+                
                 // Parse the comment
                 if (!$comment) {
                     continue;
@@ -120,15 +122,17 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
                     $line = preg_replace('/^\s*\* ?/m', '', $line);
 
                     // Search this line for a tag
-                    if (preg_match('/^@sitemenu(:\S+)?(?:\s*(.+))?$/', $line, $matches)) {
+                    if (preg_match('/^@sitemenu:?(\S+)?(?:\s*(.+))?$/', $line, $matches)) {
                         $tags[$matches[1]] = isset($matches[2]) ? $matches[2] : '';
                     }
                 }
 
-                // Store in our index
-                $controller_index[] = array('controller' => strtolower($controller->name),
-                    'action' => strtolower(substr($method->name, 7, strlen($method->name))),
-                    'sitemenu_tags' => $tags);
+                if (count($tags)) {
+                    // Store in our index
+                    $controller_index[] = array('controller' => strtolower($controller->name),
+                        'action' => strtolower(substr($method->name, 7, strlen($method->name))),
+                        'sitemenu_tags' => $tags);
+                }
             }
         }
         return $controller_index;
@@ -141,7 +145,7 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
      * @param array $action_data The data for the action built by [SiteMenu::_index_controllers()]
      * @return boolean;
      */
-    protected function _check_action_auth($action_data) {
+    protected function _check_action_auth($action_data) {        
         return true;
     }
 

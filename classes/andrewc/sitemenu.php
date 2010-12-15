@@ -43,9 +43,12 @@ abstract class AndrewC_SiteMenu {
     public static function classes($path = 'classes', $list = null) {
 
         if ($list === NULL) {
+            if (DIRECTORY_SEPARATOR != "/") {
+                $path = str_replace('/', DIRECTORY_SEPARATOR, $path);
+            }
             $list = Kohana::list_files($path);
         }
-
+        
         $classes = array();
 
         foreach ($list as $name => $path) {
@@ -53,10 +56,10 @@ abstract class AndrewC_SiteMenu {
                 $classes += SiteMenu::classes($path);
             } else {
                 // Ignore files that do not have the correct php extension
-                if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) != EXT) {
+                if ( "." .strtolower(pathinfo($name, PATHINFO_EXTENSION)) != EXT) {
                     continue;
                 }
-
+                
                 // Remove "classes/" and the extension
                 $class = substr($name, 8, -(strlen(EXT)));
 
@@ -74,7 +77,7 @@ abstract class AndrewC_SiteMenu {
      * Creates the root node
      */
     public function __construct() {
-        $this->_root = new SiteMenu_Item('Root', null, $this);
+        $this->_root = new SiteMenu_Item('Root', null, null, $this);
     }
 
     /**
@@ -92,7 +95,7 @@ abstract class AndrewC_SiteMenu {
     public function compile() {
         // Get all the available providers
         $providers = SiteMenu::classes('classes/sitemenu/provider');
-
+        
         // Get providers to ignore
         $ignore_providers = Kohana::config('sitemenu.ignore_providers');
 
@@ -109,8 +112,8 @@ abstract class AndrewC_SiteMenu {
             }
 
             // Execute the provider's compile method
-            $provider = $provider->newInstance();
-            $provider->compile($this);
+            $provider = $provider->newInstance($this);
+            $provider->compile();
         }
 
         // Build a reverse lookup array
@@ -147,8 +150,7 @@ abstract class AndrewC_SiteMenu {
      *
      */
     protected function _build_reverse_lookup() {
-        // Get the top level items
-        // Recurse into each and map to a reverse path
+         $this->_root->build_reverse_lookup($this->_reverse_lookup_map);
     }
 
     /**
@@ -186,6 +188,10 @@ abstract class AndrewC_SiteMenu {
             $params = Arr::get($path_info, null, array());
             // And the reverse nav path is then under this URI as a querystring
             $key = http_build_query(Arr::extract($request->param(null), $params));
+            // If there's no key, it means we have a missing parameter
+            if ( ! $key) {
+                return false;
+            }
             return Arr::get($path_info, $key, null);
         } else {
             // The nav path is the value
@@ -224,10 +230,10 @@ abstract class AndrewC_SiteMenu {
      * @param boolean $force_create Whether to create the item if it doesn't exist
      * @return SiteMenu_Item
      */
-    public function get_item($path, $force_create = false) {
+    public function get_item($path, $force_create = false) {        
         // Split the path into components
         $components = SiteMenu::split_path($path);
-
+        
         // Start from our root node
         $item = $this->_root;
 
