@@ -10,6 +10,23 @@ return array(
         //'sitemenu_provider_docblock' => true,
     ),
     /*
+     * Settings for SiteMenu_Item
+     */
+    'item' => array(
+        // Default setting of the item attributes
+        'default_attributes' => array(
+            'list' => array(
+                'class'=>'sitemenu',
+            ),
+            'item' => array(
+                
+            ),
+            'link' => array(
+                'href' => '#',
+            ),
+        ),
+    ),
+    /*
      * Settings for specific SiteMenu_Provider classes
      */
     'provider' => array(
@@ -19,8 +36,13 @@ return array(
         'docblock' => array(
             // Default values for docblock tags when not provided
             'default_tags' => array(
-                'route' => 'default',
-                
+                'route' => 'default',                
+            ),
+            // Index caching parameters
+            'index_caching' => array(
+                'key' => 'sitemenu_docblock_index',
+
+
             )
 
         ),

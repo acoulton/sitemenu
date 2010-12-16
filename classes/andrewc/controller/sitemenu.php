@@ -16,5 +16,8 @@ class AndrewC_Controller_SiteMenu extends Controller {
         print_r(SiteMenu::instance());
         print_r(SiteMenu::instance()
                 ->get_active_path());
+        echo "</pre>";
+        echo SiteMenu::instance()
+        ->render();
     }
 }

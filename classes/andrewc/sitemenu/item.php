@@ -1,4 +1,5 @@
 <?php
+
 defined('SYSPATH') or die('No direct script access.');
 
 /**
@@ -16,7 +17,6 @@ abstract class AndrewC_SiteMenu_Item {
     public $action = null;
     public $params = null;
     public $item_attributes = array();
-
     protected $_sub_items = array();
     protected $_parent = array();
     protected $_site_menu = null;
@@ -33,17 +33,11 @@ abstract class AndrewC_SiteMenu_Item {
         $this->_parent = $parent;
         $this->_path = $path;
         $this->_site_menu = $menu;
-    }
 
-    public function __sleep() {
-        // Set $route back to the route name
-        // What about $_parent?
+        // Set default attributes
+        $this->item_attributes = Kohana::config('sitemenu.item.default_attributes');
+        $this->item_attributes['item']['id'] = $this->_path;
     }
-
-    public function __wakeup() {
-        // Set $route to the route object reference
-    }
-
 
     /**
      * Sets the details of the route that will be used to generate a URI for this
@@ -58,15 +52,39 @@ abstract class AndrewC_SiteMenu_Item {
      */
     public function route($route, $directory, $controller, $action, $params) {
         if ($route instanceof Route) {
-            $this->route = $route;
+            $this->route = Route::name($route);
         } else {
-            $this->route = Route::get($route);
+            $this->route = $route;
         }
         $this->directory = $directory;
         $this->controller = $controller;
         $this->action = $action;
         $this->params = $params;
+        $this->get_url(true);
         return $this;
+    }
+
+    /**
+     * Calculates and stores the url for this item
+     * @param boolean $force_recompile Whether to force recompilation of the route
+     * @return string
+     */
+    public function get_url($force_recompile = false) {
+        $uri = Arr::path($this->item_attributes, 'link.href', '#');
+        if ($force_recompile || ($uri == '#')) {
+            if ($this->route) {
+                $uri_params = Arr::merge($this->params, array(
+                            'directory' => $this->directory,
+                            'controller' => $this->controller,
+                            'action' => $this->action,
+                        ));
+                $uri = Route::url($this->route, $uri_params);
+            } else {
+                $uri = '#';
+            }
+        }
+
+        return $this->item_attributes['link']['href'] = $uri;
     }
 
     /**
@@ -76,11 +94,13 @@ abstract class AndrewC_SiteMenu_Item {
      * @param string $tag
      * @return mixed
      */
-    public function get_attribute($tag = null) {
-        if ( $tag === null) {
-            return $this->item_attributes;
+    public function get_attribute($element, $tag = null) {
+        // Get the base attributes for the element
+        $attributes = Arr::get($this->item_attributes, $element, array());
+        if ($tag === null) {
+            return $attributes;
         } else {
-            return Arr::get($this->item_attributes, $tag, null);
+            return Arr::get($attributes, $tag, null);
         }
     }
 
@@ -89,14 +109,14 @@ abstract class AndrewC_SiteMenu_Item {
      *
      *     SiteMenu::instance()
      *         ->get_item('Home')
-     *         ->set_attribute('title','Our home page');
+     *         ->set_attribute('link','title','Our home page');
      *
      * @param string $tag
      * @param mixed $value
      * @return AndrewC_SiteMenu_Item
      */
-    public function set_attribute($tag, $value) {
-        $this->item_attributes[$tag] = $value;
+    public function set_attribute($element, $tag, $value) {
+        $this->item_attributes[$element][$tag] = $value;
         return $this;
     }
 
@@ -114,7 +134,7 @@ abstract class AndrewC_SiteMenu_Item {
         // Create a new item if required
         if (($item === false) AND $force_create) {
             if ($this->_path) {
-                $path=$this->_path . ">" . $caption;
+                $path = $this->_path . ">" . $caption;
             } else {
                 $path = $caption;
             }
@@ -124,6 +144,14 @@ abstract class AndrewC_SiteMenu_Item {
 
         // Returns item or false if not found
         return $item;
+    }
+
+    /**
+     * Returns all children of this node
+     * @return array
+     */
+    public function sub_items() {
+        return $this->_sub_items;
     }
 
     /**
@@ -137,7 +165,7 @@ abstract class AndrewC_SiteMenu_Item {
         // Build our own reverse lookup if we have a route
         if ($this->route) {
             // Get a reference to the place we need to store our info
-            $lookup_map = &$map[Route::name($this->route)][$this->directory][$this->controller][$this->action];
+            $lookup_map = &$map[$this->route][$this->directory][$this->controller][$this->action];
 
             if (count($this->params)) {
                 // Test to see if already exists
@@ -148,7 +176,6 @@ abstract class AndrewC_SiteMenu_Item {
                 // Map the keys and the params
                 $lookup_map[null] = array_keys($this->params);
                 $lookup_map[http_build_query($this->params)] = $this->_path;
-
             } else {
                 // It's a straightforward storage of the path
                 $lookup_map = $this->_path;
@@ -160,5 +187,5 @@ abstract class AndrewC_SiteMenu_Item {
             $item->build_reverse_lookup($map);
         }
     }
-    
+
 }

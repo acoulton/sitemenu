@@ -25,6 +25,7 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
      * based on the docblock tags of the controller actions.
      */
     public function compile() {
+        $config = Kohana::config('sitemenu.provider.docblock');
         // Attempt to get an index from cache
         // @todo: the actual caching!
         if ( ! ($controller_index = false)) {
@@ -33,7 +34,7 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
         }
         
         // Get default tags
-        $default_tags = Kohana::config('sitemenu.provider.docblock.default_tags');
+        $default_tags = Arr::get($config, 'default_tags',array());
         foreach ($controller_index as $action) {
             // Merge the default tags
             $tags = Arr::merge($default_tags, $action['sitemenu_tags']);

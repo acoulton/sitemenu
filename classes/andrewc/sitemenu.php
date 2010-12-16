@@ -203,6 +203,9 @@ abstract class AndrewC_SiteMenu {
      * Renders the menu tree as a view, in a provided template layout
      */
     public function render() {
+        return View::factory('sitemenu/topmenubar')
+                ->set('menu',  $this->_root)
+                ->set('is_root', true);
         
     }
 
