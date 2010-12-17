@@ -16,7 +16,7 @@ defined('SYSPATH') or die('No direct script access.');
  *         }
  *
  * @package SiteMenu
- * @subpackage Provider
+ * @category Provider
  */
 abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
 
@@ -40,7 +40,7 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
             $tags = Arr::merge($default_tags, $action['sitemenu_tags']);
 
             // If there is an auth tag, check with the auth provider whether to include
-            if (isset($tags['auth']) AND !$this->_check_action_auth($action)) {
+            if (isset($tags['condition']) AND !$this->_check_action_auth($action)) {
                 continue;
             }
 
@@ -55,6 +55,8 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
             // Set the item route
             $item->route(Arr::get($tags,'route','default'), $directory,
                             $controller, $action['action'], array());
+
+            // @todo: attribute tags - parse_str(string, array)
         }
         return true;
     }
@@ -72,13 +74,21 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
     protected function _index_controllers() {
         $controller_index = array();
         // Get all controller classes
+        // @todo: use configuration to ignore modules
         $controllers = SiteMenu::classes('classes/controller');
+
+        $excluded_by_config = Kohana::config('sitemenu.provider.docblock.exclude_actions');
         
-        // @todo: use configuration to get controllers to ignore?
-        foreach ($controllers as $controller) {
+        foreach ($controllers as $controller_name) {
+            $controller_name = strtolower($controller_name);
+
+            // Ignore excluded controllers
+            if (isset($excluded_by_config[$controller_name.'/*'])) {
+                continue;
+            }
             
             // Get a new Reflection of the class
-            $controller = new ReflectionClass($controller);
+            $controller = new ReflectionClass($controller_name);
 
             // Only process non-abstract classes
             if ($controller->isAbstract()) {
@@ -89,11 +99,19 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
             foreach ($controller->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 $comment = "";
                 $method_name = $method->name;
+                
                 // Ignore non-action methods
                 if (substr($method_name, 0, 7) !== 'action_') {
                     continue;
                 }
                 
+                $action_name = strtolower(substr($method->name, 7, strlen($method->name)));
+
+                //Ignore actions excluded by config
+                if (isset($excluded_by_config[$controller_name.'/'.$action_name])) {
+                    continue;
+                }
+
                 // Find a method docblock, in the current class or an ancestor
                 $defining_class = $controller;
                 do {
@@ -130,8 +148,9 @@ abstract class AndrewC_SiteMenu_Provider_DocBlock extends SiteMenu_Provider {
 
                 if (count($tags)) {
                     // Store in our index
-                    $controller_index[] = array('controller' => strtolower($controller->name),
-                        'action' => strtolower(substr($method->name, 7, strlen($method->name))),
+                    $controller_index[] = array(
+                        'controller' => $controller_name,
+                        'action' => $action_name,
                         'sitemenu_tags' => $tags);
                 }
             }
