@@ -1,6 +1,13 @@
 <?php
 defined('SYSPATH') or die('No direct script access.');
 
+/**
+ * Base class for implementing conditions based on the HTTP request state including
+ * client IP, protocol, etc
+ * @todo Requires implementation!
+ * @package SiteMenu
+ * @category ConditionHandler
+ */
 class AndrewC_SiteMenu_ConditionHandler_HTTP {
 
     public static function ip_class($action, $class) {
