@@ -1,6 +1,6 @@
 <?php
 defined('SYSPATH') or die('No direct script access.');
 
-class AndrewC_SiteMenu_Condition_Handler_Auth {
+class AndrewC_SiteMenu_ConditionHandler_Auth {
     
 }

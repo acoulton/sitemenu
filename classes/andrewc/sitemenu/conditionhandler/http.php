@@ -1,7 +1,7 @@
 <?php
 defined('SYSPATH') or die('No direct script access.');
 
-class AndrewC_SiteMenu_Condition_Handler_HTTP {
+class AndrewC_SiteMenu_ConditionHandler_HTTP {
 
     public static function ip_class($action, $class) {
         /*

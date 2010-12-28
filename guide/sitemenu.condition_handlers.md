@@ -21,24 +21,24 @@ example a user logs in or out) the SiteMenu object should be recompiled.
 
 Class | Purpose
 ------|--------
-[SiteMenu_Condition_Handler_Auth] | A standard interface to multiple drivers providing conditions related to user authentication and authorization
-[SiteMenu_Condition_Handler_Config] | Conditions based on whether a config value is set
-[SiteMenu_Condition_Handler_DateTime] | Conditions based on date and time
-[SiteMenu_Condition_Handler_Environment] | Conditions based on the server environment
-[SiteMenu_Condition_Handler_HTTP] | Conditions based on HTTP properties - SSL or not, originating IP, etc
+[SiteMenu_ConditionHandler_Auth] | A standard interface to multiple drivers providing conditions related to user authentication and authorization
+[SiteMenu_ConditionHandler_Config] | Conditions based on whether a config value is set
+[SiteMenu_ConditionHandler_DateTime] | Conditions based on date and time
+[SiteMenu_ConditionHandler_Environment] | Conditions based on the server environment
+[SiteMenu_ConditionHandler_HTTP] | Conditions based on HTTP properties - SSL or not, originating IP, etc
 
 
 
 ## Custom Condition Handlers
 
 Developers can easily add custom condition handlers by defining a suitable
-SiteMenu_Condition_Handler_XXX class. Condition methods are public static methods
+SiteMenu_ConditionHandler_XXX class. Condition methods are public static methods
 and receive two arguments - an array of information about the controller, action
 and any parameters being used to map the URI, and an optional additional string
 parameter.
 
     //application/classes/sitemenu/condition/handler/random
-    class SiteMenu_Condition_Handler_Random {
+    class SiteMenu_ConditionHandler_Random {
 
         /**
          * Includes a menu item at random
