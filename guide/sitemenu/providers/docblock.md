@@ -47,7 +47,7 @@ A simple navigation definition might look like this:
 ### Tag values
 
 #### @sitemenu
-The [navigation path](basic_concepts#navigation-paths). The existence of this
+The [navigation path](basic-concepts#navigation-paths). The existence of this
 tag will include the action in the navigation, with the route and other elements
 configurable with further tags.
 
@@ -73,7 +73,9 @@ optional string parameter to pass to the method.
     SiteMenu_Condition_Handler_Environment::is($action,"development");
 ~~~
 
-#### @sitemenu:list-attributes, @sitemenu::item-attributes, @sitemenu::link-attributes
+#### @sitemenu:list-attributes
+#### @sitemenu:item-attributes
+#### @sitemenu:link-attributes
 
 Defines attributes to be set on any of the list, item or link elements when rendering
 the navigation. The value should be a valid querystring.
